@@ -278,5 +278,5 @@ public class UserManagementPanel extends JPanel {
 
         dialog.add(panel);
         dialog.setVisible(true);
-    }
+    }
 }
