@@ -5,6 +5,9 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -20,6 +23,8 @@ import javax.swing.table.DefaultTableModel;
 
 import edu.univ.erp.api.admin.AdminApi;
 import edu.univ.erp.config.ApplicationContext;
+import edu.univ.erp.data.AuthRepository;
+import edu.univ.erp.domain.AuthUser;
 import edu.univ.erp.domain.Instructor;
 import edu.univ.erp.domain.Student;
 
@@ -29,11 +34,13 @@ import edu.univ.erp.domain.Student;
 public class UserManagementPanel extends JPanel {
 
     private final AdminApi adminApi;
+    private final AuthRepository authRepository;
     private final JTable usersTable;
     private final DefaultTableModel tableModel;
 
     public UserManagementPanel(ApplicationContext context) {
         this.adminApi = context.adminApi();
+        this.authRepository = context.repositoryFactory().authRepository();
         this.tableModel = new DefaultTableModel(new String[]{
                 "Type", "Username", "Roll No/Dept", "Program/Title", "Year/Status"
         }, 0) {
@@ -76,11 +83,17 @@ public class UserManagementPanel extends JPanel {
     private void loadUsers() {
         tableModel.setRowCount(0);
         try {
+            // Fetch all auth users into a map for efficient lookup
+            Map<Long, AuthUser> authUserMap = authRepository.findAll().stream()
+                    .collect(Collectors.toMap(AuthUser::id, Function.identity()));
+
             // Load students
             for (Student student : adminApi.getAllStudents()) {
+                AuthUser authUser = authUserMap.get(student.userId());
+                String username = (authUser != null) ? authUser.username() : "[Not Linked]";
                 tableModel.addRow(new Object[]{
                         "Student",
-                        "N/A", // Would need to join with auth users
+                        username,
                         student.rollNumber(),
                         student.program(),
                         "Year " + student.yearOfStudy()
@@ -89,9 +102,11 @@ public class UserManagementPanel extends JPanel {
 
             // Load instructors
             for (Instructor instructor : adminApi.getAllInstructors()) {
+                AuthUser authUser = authUserMap.get(instructor.userId());
+                String username = (authUser != null) ? authUser.username() : "[Not Linked]";
                 tableModel.addRow(new Object[]{
                         "Instructor",
-                        "N/A", // Would need to join with auth users
+                        username,
                         instructor.department(),
                         instructor.title(),
                         "Active"
@@ -263,6 +278,5 @@ public class UserManagementPanel extends JPanel {
 
         dialog.add(panel);
         dialog.setVisible(true);
-    }
+    }
 }
-

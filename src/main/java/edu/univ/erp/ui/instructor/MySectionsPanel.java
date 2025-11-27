@@ -14,6 +14,8 @@ import javax.swing.table.DefaultTableModel;
 
 import edu.univ.erp.api.instructor.InstructorApi;
 import edu.univ.erp.config.ApplicationContext;
+import edu.univ.erp.data.CourseRepository;
+import edu.univ.erp.domain.Course;
 import edu.univ.erp.domain.Section;
 import edu.univ.erp.domain.Term;
 
@@ -25,6 +27,7 @@ public class MySectionsPanel extends JPanel {
     private final ApplicationContext context;
     private final long userId;
     private final InstructorApi instructorApi;
+    private final CourseRepository courseRepository;
     private final JTable sectionsTable;
     private final DefaultTableModel tableModel;
     private JComboBox<Term> termCombo;
@@ -36,6 +39,7 @@ public class MySectionsPanel extends JPanel {
         this.context = context;
         this.userId = userId;
         this.instructorApi = context.instructorApi();
+        this.courseRepository = context.repositoryFactory().courseRepository();
         this.onSectionSelected = onSectionSelected;
         this.tableModel = new DefaultTableModel(new String[]{
                 "Course", "Section Code", "Day", "Time", "Room", "Capacity", "Enrolled"
@@ -105,12 +109,14 @@ public class MySectionsPanel extends JPanel {
 
     private void updateTable() {
         tableModel.setRowCount(0);
-        // TODO: Need to join with courses to show course codes
         for (Section section : currentSections) {
             int enrolledCount = context.repositoryFactory().enrollmentRepository()
                     .countForSection(section.id());
+            Course course = courseRepository.findById(section.courseId()).orElse(null);
+            String courseCode = (course != null) ? course.code() : "Unknown";
+            
             tableModel.addRow(new Object[]{
-                    "Course " + section.courseId(), // Placeholder
+                    courseCode,
                     section.sectionCode(),
                     section.dayOfWeek().name(),
                     section.startTime() + " - " + section.endTime(),
@@ -127,6 +133,5 @@ public class MySectionsPanel extends JPanel {
             return currentSections.get(selectedRow).id();
         }
         return null;
-    }
+    }
 }
-

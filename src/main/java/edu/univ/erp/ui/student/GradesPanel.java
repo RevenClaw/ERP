@@ -2,17 +2,23 @@ package edu.univ.erp.ui.student;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+
+import com.opencsv.CSVWriter;
 
 import edu.univ.erp.config.ApplicationContext;
 import edu.univ.erp.data.AssessmentRepository;
@@ -220,13 +226,56 @@ public class GradesPanel extends JPanel {
     }
 
     private void downloadTranscript() {
-        JOptionPane.showMessageDialog(this, "Transcript export (CSV) - Coming soon!",
-                "Feature Not Available", JOptionPane.INFORMATION_MESSAGE);
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Transcript");
+        fileChooser.setSelectedFile(new java.io.File("transcript.csv"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        java.io.File fileToSave = fileChooser.getSelectedFile();
+        try (CSVWriter writer = new CSVWriter(new FileWriter(fileToSave))) {
+            // Write header
+            writer.writeNext(new String[]{"Term", "Year", "Course Code", "Course Title", "Final Score", "Letter Grade"});
+
+            // Write data
+            Student student = studentRepository.findByUserId(userId)
+                    .orElseThrow(() -> new IllegalStateException("Student not found"));
+            List<Enrollment> allEnrollments = enrollmentRepository.findByStudent(student.id());
+
+            for (Enrollment en : allEnrollments) {
+                if (en.status() != EnrollmentStatus.COMPLETED) {
+                    continue; // Skip non-completed courses for transcript
+                }
+                
+                Section sec = sectionRepository.findById(en.sectionId()).orElse(null);
+                Course crs = (sec != null) ? courseRepository.findById(sec.courseId()).orElse(null) : null;
+                Optional<FinalGrade> fg = finalGradeRepository.findByEnrollment(en.id());
+
+                if (sec != null && crs != null && fg.isPresent()) {
+                    writer.writeNext(new String[]{
+                            sec.term().name(),
+                            String.valueOf(sec.year()),
+                            crs.code(),
+                            crs.title(),
+                            String.format("%.2f", fg.get().finalScore()),
+                            fg.get().letterGrade()
+                    });
+                }
+            }
+            JOptionPane.showMessageDialog(this, "Transcript downloaded successfully!", "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error writing file: " + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void downloadTranscriptPdf() {
         JOptionPane.showMessageDialog(this, "Transcript export (PDF) - Coming soon!",
                 "Feature Not Available", JOptionPane.INFORMATION_MESSAGE);
-    }
+    }
 }
-
