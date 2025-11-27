@@ -21,5 +21,7 @@ public interface StudentRepository {
     Student update(Student student);
 
     List<Student> findAll();
+
+    void deleteByUserId(long userId);
 }
 

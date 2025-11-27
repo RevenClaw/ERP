@@ -24,6 +24,8 @@ import edu.univ.erp.domain.Enrollment;
 import edu.univ.erp.domain.EnrollmentStatus;
 import edu.univ.erp.domain.Section;
 import edu.univ.erp.domain.Term;
+import edu.univ.erp.ui.common.ButtonStyler;
+import edu.univ.erp.ui.common.TableStyler;
 
 /**
  * Panel for viewing and managing student enrollments.
@@ -58,6 +60,7 @@ public class MyRegistrationsPanel extends JPanel {
             }
         };
         this.enrollmentsTable = new JTable(tableModel);
+        TableStyler.apply(enrollmentsTable);
         this.currentEnrollments = List.of();
 
         initializeUI();
@@ -81,6 +84,7 @@ public class MyRegistrationsPanel extends JPanel {
 
         JButton loadButton = new JButton("Load My Registrations");
         loadButton.addActionListener(e -> loadEnrollments());
+        ButtonStyler.stylePrimary(loadButton);
         topPanel.add(loadButton);
 
         add(topPanel, BorderLayout.NORTH);
@@ -92,13 +96,15 @@ public class MyRegistrationsPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom: action buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         JButton dropButton = new JButton("Drop Selected Section");
         dropButton.addActionListener(e -> dropSection());
+        ButtonStyler.stylePrimary(dropButton);
         bottomPanel.add(dropButton);
 
         JButton refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> loadEnrollments());
+        ButtonStyler.stylePrimary(refreshButton);
         bottomPanel.add(refreshButton);
 
         add(bottomPanel, BorderLayout.SOUTH);

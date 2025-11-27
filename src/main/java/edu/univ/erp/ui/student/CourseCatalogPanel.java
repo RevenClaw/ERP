@@ -19,6 +19,8 @@ import edu.univ.erp.api.student.StudentApi;
 import edu.univ.erp.api.types.SectionRow;
 import edu.univ.erp.config.ApplicationContext;
 import edu.univ.erp.domain.Term;
+import edu.univ.erp.ui.common.ButtonStyler;
+import edu.univ.erp.ui.common.TableStyler;
 
 /**
  * Panel for browsing course catalog and registering for sections.
@@ -49,6 +51,7 @@ public class CourseCatalogPanel extends JPanel {
             }
         };
         this.sectionsTable = new JTable(tableModel);
+        TableStyler.apply(sectionsTable);
         this.currentSections = List.of();
 
         initializeUI();
@@ -79,6 +82,7 @@ public class CourseCatalogPanel extends JPanel {
 
         JButton searchButton = new JButton("Search");
         searchButton.addActionListener(e -> performSearch());
+        ButtonStyler.stylePrimary(searchButton);
         topPanel.add(searchButton);
 
         add(topPanel, BorderLayout.NORTH);
@@ -90,13 +94,15 @@ public class CourseCatalogPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom: action buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         JButton registerButton = new JButton("Register for Selected Section");
         registerButton.addActionListener(e -> registerForSection());
+        ButtonStyler.stylePrimary(registerButton);
         bottomPanel.add(registerButton);
 
         JButton refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> loadSections());
+        ButtonStyler.stylePrimary(refreshButton);
         bottomPanel.add(refreshButton);
 
         add(bottomPanel, BorderLayout.SOUTH);

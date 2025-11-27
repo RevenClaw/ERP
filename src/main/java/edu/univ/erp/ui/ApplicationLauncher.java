@@ -74,7 +74,7 @@ public final class ApplicationLauncher {
 
             case ADMIN:
                 AdminDashboard adminDashboard = new AdminDashboard(
-                        response, maintenanceMode, maintenanceMessage, context);
+                        maintenanceMode, maintenanceMessage, context);
                 adminDashboard.setVisible(true);
                 break;
 

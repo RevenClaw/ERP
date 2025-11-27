@@ -6,12 +6,13 @@ import java.util.List;
 import java.util.Objects;
 
 import edu.univ.erp.access.AccessDeniedException;
-import edu.univ.erp.data.AuthUserRepository;
+import edu.univ.erp.auth.AccountStatus;
 import edu.univ.erp.domain.Course;
 import edu.univ.erp.domain.Instructor;
 import edu.univ.erp.domain.Section;
 import edu.univ.erp.domain.Student;
 import edu.univ.erp.domain.Term;
+import edu.univ.erp.domain.UserRole;
 import edu.univ.erp.domain.Weekday;
 import edu.univ.erp.service.AdminService;
 import edu.univ.erp.service.MaintenanceService;
@@ -23,14 +24,11 @@ public class AdminApi {
 
     private final AdminService adminService;
     private final MaintenanceService maintenanceService;
-    private final AuthUserRepository authUserRepository;
 
     public AdminApi(AdminService adminService,
-                   MaintenanceService maintenanceService,
-                   AuthUserRepository authUserRepository) {
+                   MaintenanceService maintenanceService) {
         this.adminService = Objects.requireNonNull(adminService, "adminService");
         this.maintenanceService = Objects.requireNonNull(maintenanceService, "maintenanceService");
-        this.authUserRepository = Objects.requireNonNull(authUserRepository, "authUserRepository");
     }
 
     public CreateUserResult createStudent(String username, String password, String rollNumber,
@@ -113,6 +111,63 @@ public class AdminApi {
         maintenanceService.toggle(enabled);
     }
 
+    public OperationResult updateCourse(long courseId, String code, String title, double credits, String description) {
+        try {
+            Course course = adminService.updateCourse(courseId, code, title, credits, description);
+            return OperationResult.success("Course updated: " + course.code());
+        } catch (Exception ex) {
+            return OperationResult.failure(ex.getMessage());
+        }
+    }
+
+    public OperationResult updateSection(long sectionId, long courseId, long instructorId, Term term, int year,
+                                         String sectionCode, Weekday dayOfWeek, LocalTime startTime,
+                                         LocalTime endTime, String room, int capacity, LocalDate enrollmentDeadline) {
+        try {
+            Section section = adminService.updateSection(sectionId, courseId, instructorId, term, year, sectionCode,
+                    dayOfWeek, startTime, endTime, room, capacity, enrollmentDeadline);
+            return OperationResult.success("Section updated: " + section.sectionCode());
+        } catch (Exception ex) {
+            return OperationResult.failure(ex.getMessage());
+        }
+    }
+
+    public OperationResult updateUser(long userId,
+                                      UserRole role,
+                                      AccountStatus status,
+                                      StudentProfilePayload studentProfile,
+                                      InstructorProfilePayload instructorProfile) {
+        try {
+            adminService.updateUserAccount(
+                    userId,
+                    role,
+                    status,
+                    studentProfile != null
+                            ? new AdminService.StudentProfileUpdate(studentProfile.rollNumber(),
+                            studentProfile.program(), studentProfile.yearOfStudy())
+                            : null,
+                    instructorProfile != null
+                            ? new AdminService.InstructorProfileUpdate(instructorProfile.department(),
+                            instructorProfile.title())
+                            : null
+            );
+            return OperationResult.success("User updated successfully.");
+        } catch (AccessDeniedException | IllegalArgumentException ex) {
+            return OperationResult.failure(ex.getMessage());
+        } catch (Exception ex) {
+            return OperationResult.failure("Failed to update user: " + ex.getMessage());
+        }
+    }
+
+    public OperationResult deactivateUser(long userId) {
+        try {
+            adminService.deactivateUser(userId);
+            return OperationResult.success("User deactivated.");
+        } catch (Exception ex) {
+            return OperationResult.failure(ex.getMessage());
+        }
+    }
+
     public record CreateUserResult(boolean success, String message) {
         public static CreateUserResult success(String message) {
             return new CreateUserResult(true, message);
@@ -141,6 +196,22 @@ public class AdminApi {
         public static CreateSectionResult failure(String message) {
             return new CreateSectionResult(false, message);
         }
+    }
+
+    public record OperationResult(boolean success, String message) {
+        public static OperationResult success(String message) {
+            return new OperationResult(true, message);
+        }
+
+        public static OperationResult failure(String message) {
+            return new OperationResult(false, message);
+        }
+    }
+
+    public record StudentProfilePayload(String rollNumber, String program, int yearOfStudy) {
+    }
+
+    public record InstructorProfilePayload(String department, String title) {
     }
 }
 

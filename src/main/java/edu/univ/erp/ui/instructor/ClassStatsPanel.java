@@ -20,20 +20,20 @@ public class ClassStatsPanel extends JPanel {
     private final long userId;
     private final InstructorApi instructorApi;
     private final JLabel totalStudentsLabel;
-    private final JLabel overallAverageLabel;
-    private final JLabel finalGradeAverageLabel;
-    private final JLabel firstAssessmentLabel;
-    private final JLabel secondAssessmentLabel;
+    private final JLabel classAverageLabel;
+    private final JLabel medianLabel;
+    private final JLabel highestLabel;
+    private final JLabel lowestLabel;
     private Long currentSectionId;
 
     public ClassStatsPanel(ApplicationContext context, long userId) {
         this.userId = userId;
         this.instructorApi = context.instructorApi();
         this.totalStudentsLabel = new JLabel("N/A");
-        this.overallAverageLabel = new JLabel("N/A");
-        this.finalGradeAverageLabel = new JLabel("N/A");
-        this.firstAssessmentLabel = new JLabel("N/A");
-        this.secondAssessmentLabel = new JLabel("N/A");
+        this.classAverageLabel = new JLabel("N/A");
+        this.medianLabel = new JLabel("N/A");
+        this.highestLabel = new JLabel("N/A");
+        this.lowestLabel = new JLabel("N/A");
 
         initializeUI();
     }
@@ -50,14 +50,14 @@ public class ClassStatsPanel extends JPanel {
         JPanel statsPanel = new JPanel(new GridLayout(5, 2, 10, 10));
         statsPanel.add(new JLabel("Total Students:"));
         statsPanel.add(totalStudentsLabel);
-        statsPanel.add(new JLabel("Overall Average:"));
-        statsPanel.add(overallAverageLabel);
-        statsPanel.add(new JLabel("Final Grade Average:"));
-        statsPanel.add(finalGradeAverageLabel);
-        statsPanel.add(new JLabel("First Assessment Average:"));
-        statsPanel.add(firstAssessmentLabel);
-        statsPanel.add(new JLabel("Second Assessment Average:"));
-        statsPanel.add(secondAssessmentLabel);
+        statsPanel.add(new JLabel("Class Average:"));
+        statsPanel.add(classAverageLabel);
+        statsPanel.add(new JLabel("Median Score:"));
+        statsPanel.add(medianLabel);
+        statsPanel.add(new JLabel("Highest Score:"));
+        statsPanel.add(highestLabel);
+        statsPanel.add(new JLabel("Lowest Score:"));
+        statsPanel.add(lowestLabel);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(statsPanel, BorderLayout.CENTER);
@@ -72,20 +72,20 @@ public class ClassStatsPanel extends JPanel {
     private void loadStatistics() {
         if (currentSectionId == null) {
             totalStudentsLabel.setText("N/A");
-            overallAverageLabel.setText("N/A");
-            finalGradeAverageLabel.setText("N/A");
-            firstAssessmentLabel.setText("N/A");
-            secondAssessmentLabel.setText("N/A");
+            classAverageLabel.setText("N/A");
+            medianLabel.setText("N/A");
+            highestLabel.setText("N/A");
+            lowestLabel.setText("N/A");
             return;
         }
 
         try {
             InstructorService.ClassStatistics stats = instructorApi.getClassStatistics(userId, currentSectionId);
             totalStudentsLabel.setText(String.valueOf(stats.totalStudents()));
-            overallAverageLabel.setText(String.format("%.2f%%", stats.overallAverage()));
-            finalGradeAverageLabel.setText(String.format("%.2f%%", stats.finalGradeAverage()));
-            firstAssessmentLabel.setText(String.format("%.2f", stats.firstAssessmentAverage()));
-            secondAssessmentLabel.setText(String.format("%.2f", stats.secondAssessmentAverage()));
+            classAverageLabel.setText(String.format("%.2f%%", stats.average()));
+            medianLabel.setText(String.format("%.2f%%", stats.median()));
+            highestLabel.setText(String.format("%.2f%%", stats.highest()));
+            lowestLabel.setText(String.format("%.2f%%", stats.lowest()));
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error loading statistics: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);

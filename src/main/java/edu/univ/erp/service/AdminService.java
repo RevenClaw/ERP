@@ -200,5 +200,84 @@ public class AdminService {
         accessControl.ensureRole(UserRole.ADMIN);
         return sectionRepository.findAll();
     }
+
+    public AuthUser updateUserAccount(long userId,
+                                      UserRole newRole,
+                                      AccountStatus status,
+                                      StudentProfileUpdate studentProfile,
+                                      InstructorProfileUpdate instructorProfile) {
+        accessControl.ensureWritable();
+        accessControl.ensureRole(UserRole.ADMIN);
+
+        AuthUser authUser = authUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        if (authUser.status() != status) {
+            authUser = authUserRepository.updateStatus(userId, status);
+        }
+
+        if (authUser.role() != newRole) {
+            authUser = authUserRepository.updateRole(userId, newRole);
+        }
+
+        switch (newRole) {
+            case STUDENT -> {
+                if (studentProfile == null) {
+                    throw new IllegalArgumentException("Student details are required for student role.");
+                }
+                var existingStudent = studentRepository.findByUserId(userId);
+                if (existingStudent.isPresent()) {
+                    Student current = existingStudent.get();
+                    Student updated = new Student(current.id(), userId, studentProfile.rollNumber(),
+                            studentProfile.program(), studentProfile.yearOfStudy(), current.status(),
+                            current.createdAt(), current.updatedAt());
+                    studentRepository.update(updated);
+                } else {
+                    Student created = new Student(0, userId, studentProfile.rollNumber(),
+                            studentProfile.program(), studentProfile.yearOfStudy(), StudentStatus.ACTIVE, null, null);
+                    studentRepository.save(created);
+                }
+                instructorRepository.deleteByUserId(userId);
+            }
+            case INSTRUCTOR -> {
+                if (instructorProfile == null) {
+                    throw new IllegalArgumentException("Instructor details are required for instructor role.");
+                }
+                var existingInstructor = instructorRepository.findByUserId(userId);
+                if (existingInstructor.isPresent()) {
+                    Instructor current = existingInstructor.get();
+                    Instructor updated = new Instructor(current.id(), userId,
+                            instructorProfile.department(), instructorProfile.title(),
+                            current.createdAt(), current.updatedAt());
+                    instructorRepository.update(updated);
+                } else {
+                    Instructor created = new Instructor(0, userId, instructorProfile.department(),
+                            instructorProfile.title(), null, null);
+                    instructorRepository.save(created);
+                }
+                studentRepository.deleteByUserId(userId);
+            }
+            case ADMIN -> {
+                studentRepository.deleteByUserId(userId);
+                instructorRepository.deleteByUserId(userId);
+            }
+        }
+
+        return authUser;
+    }
+
+    public AuthUser deactivateUser(long userId) {
+        accessControl.ensureWritable();
+        accessControl.ensureRole(UserRole.ADMIN);
+        authUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return authUserRepository.updateStatus(userId, AccountStatus.DISABLED);
+    }
+
+    public record StudentProfileUpdate(String rollNumber, String program, int yearOfStudy) {
+    }
+
+    public record InstructorProfileUpdate(String department, String title) {
+    }
 }
 

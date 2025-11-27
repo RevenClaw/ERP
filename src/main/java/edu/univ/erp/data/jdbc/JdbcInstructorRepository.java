@@ -129,5 +129,17 @@ public final class JdbcInstructorRepository implements InstructorRepository {
         Instant updatedAt = updatedTs != null ? updatedTs.toInstant() : Instant.now();
         return new Instructor(id, userId, department, title, createdAt, updatedAt);
     }
+
+    @Override
+    public void deleteByUserId(long userId) {
+        String sql = "DELETE FROM instructors WHERE user_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to delete instructor for user: " + userId, ex);
+        }
+    }
 }
 

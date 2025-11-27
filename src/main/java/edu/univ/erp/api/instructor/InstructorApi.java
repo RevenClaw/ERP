@@ -8,12 +8,9 @@ import java.util.Objects;
 
 import edu.univ.erp.access.AccessDeniedException;
 import edu.univ.erp.api.types.GradebookRow;
-import edu.univ.erp.data.AssessmentRepository;
-import edu.univ.erp.data.EnrollmentRepository;
 import edu.univ.erp.data.FinalGradeRepository;
 import edu.univ.erp.data.GradeRepository;
 import edu.univ.erp.data.InstructorRepository;
-import edu.univ.erp.data.SectionRepository;
 import edu.univ.erp.data.StudentRepository;
 import edu.univ.erp.domain.Assessment;
 import edu.univ.erp.domain.Enrollment;
@@ -32,26 +29,17 @@ public class InstructorApi {
 
     private final InstructorService instructorService;
     private final InstructorRepository instructorRepository;
-    private final SectionRepository sectionRepository;
-    private final EnrollmentRepository enrollmentRepository;
-    private final AssessmentRepository assessmentRepository;
     private final GradeRepository gradeRepository;
     private final FinalGradeRepository finalGradeRepository;
     private final StudentRepository studentRepository;
 
     public InstructorApi(InstructorService instructorService,
                         InstructorRepository instructorRepository,
-                        SectionRepository sectionRepository,
-                        EnrollmentRepository enrollmentRepository,
-                        AssessmentRepository assessmentRepository,
                         GradeRepository gradeRepository,
                         FinalGradeRepository finalGradeRepository,
                         StudentRepository studentRepository) {
         this.instructorService = Objects.requireNonNull(instructorService, "instructorService");
         this.instructorRepository = Objects.requireNonNull(instructorRepository, "instructorRepository");
-        this.sectionRepository = Objects.requireNonNull(sectionRepository, "sectionRepository");
-        this.enrollmentRepository = Objects.requireNonNull(enrollmentRepository, "enrollmentRepository");
-        this.assessmentRepository = Objects.requireNonNull(assessmentRepository, "assessmentRepository");
         this.gradeRepository = Objects.requireNonNull(gradeRepository, "gradeRepository");
         this.finalGradeRepository = Objects.requireNonNull(finalGradeRepository, "finalGradeRepository");
         this.studentRepository = Objects.requireNonNull(studentRepository, "studentRepository");
@@ -73,7 +61,7 @@ public class InstructorApi {
                 .orElseThrow(() -> new IllegalArgumentException("Instructor not found"));
 
         List<Enrollment> enrollments = instructorService.getSectionEnrollments(sectionId, instructor.id());
-        List<Assessment> assessments = assessmentRepository.findBySection(sectionId);
+        List<Assessment> assessments = instructorService.getSectionAssessments(sectionId, instructor.id());
         List<GradebookRow> rows = new ArrayList<>();
 
         for (Enrollment enrollment : enrollments) {
@@ -102,7 +90,7 @@ public class InstructorApi {
             rows.add(new GradebookRow(
                     enrollment.id(),
                     student.id(),
-                    student.rollNumber() + " - Student", // Using rollNumber as name for now
+                    student.rollNumber(),
                     student.rollNumber(),
                     assessmentScores,
                     finalScore,
@@ -152,6 +140,19 @@ public class InstructorApi {
         return instructorService.getClassStatistics(sectionId, instructor.id());
     }
 
+    public ManageWeightsResult updateAssessmentWeights(long userId, long sectionId, Map<Long, Double> weights) {
+        try {
+            Instructor instructor = instructorRepository.findByUserId(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Instructor not found"));
+            instructorService.updateAssessmentWeights(sectionId, instructor.id(), weights);
+            return ManageWeightsResult.success("Assessment weights updated.");
+        } catch (AccessDeniedException | IllegalArgumentException ex) {
+            return ManageWeightsResult.failure(ex.getMessage());
+        } catch (Exception ex) {
+            return ManageWeightsResult.failure("Failed to update weights: " + ex.getMessage());
+        }
+    }
+
     public record EnterGradeResult(boolean success, String message) {
         public static EnterGradeResult success(String message) {
             return new EnterGradeResult(true, message);
@@ -169,6 +170,16 @@ public class InstructorApi {
 
         public static ComputeFinalGradeResult failure(String message) {
             return new ComputeFinalGradeResult(false, message);
+        }
+    }
+
+    public record ManageWeightsResult(boolean success, String message) {
+        public static ManageWeightsResult success(String message) {
+            return new ManageWeightsResult(true, message);
+        }
+
+        public static ManageWeightsResult failure(String message) {
+            return new ManageWeightsResult(false, message);
         }
     }
 }

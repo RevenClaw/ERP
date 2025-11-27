@@ -19,5 +19,7 @@ public interface InstructorRepository {
     Instructor save(Instructor instructor);
 
     Instructor update(Instructor instructor);
+
+    void deleteByUserId(long userId);
 }
 

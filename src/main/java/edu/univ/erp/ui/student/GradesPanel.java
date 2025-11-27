@@ -37,6 +37,8 @@ import edu.univ.erp.domain.GradeEntry;
 import edu.univ.erp.domain.Section;
 import edu.univ.erp.domain.Student;
 import edu.univ.erp.domain.Term;
+import edu.univ.erp.ui.common.ButtonStyler;
+import edu.univ.erp.ui.common.TableStyler;
 
 /**
  * Panel for viewing grades and downloading transcript.
@@ -75,6 +77,7 @@ public class GradesPanel extends JPanel {
             }
         };
         this.gradesTable = new JTable(tableModel);
+        TableStyler.apply(gradesTable);
 
         initializeUI();
         loadGrades(Term.MONSOON, 2025); // Default load
@@ -99,6 +102,7 @@ public class GradesPanel extends JPanel {
 
         JButton loadButton = new JButton("Load Grades");
         loadButton.addActionListener(e -> loadGrades());
+        ButtonStyler.stylePrimary(loadButton);
         topPanel.add(loadButton);
 
         add(topPanel, BorderLayout.NORTH);
@@ -109,13 +113,15 @@ public class GradesPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Bottom: action buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         JButton downloadTranscriptButton = new JButton("Download Transcript (CSV)");
         downloadTranscriptButton.addActionListener(e -> downloadTranscript());
+        ButtonStyler.stylePrimary(downloadTranscriptButton);
         bottomPanel.add(downloadTranscriptButton);
 
         JButton downloadPdfButton = new JButton("Download Transcript (PDF)");
         downloadPdfButton.addActionListener(e -> downloadTranscriptPdf());
+        ButtonStyler.stylePrimary(downloadPdfButton);
         bottomPanel.add(downloadPdfButton);
 
         add(bottomPanel, BorderLayout.SOUTH);
@@ -277,5 +283,5 @@ public class GradesPanel extends JPanel {
     private void downloadTranscriptPdf() {
         JOptionPane.showMessageDialog(this, "Transcript export (PDF) - Coming soon!",
                 "Feature Not Available", JOptionPane.INFORMATION_MESSAGE);
-    }
+    }
 }

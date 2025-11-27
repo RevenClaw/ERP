@@ -72,14 +72,10 @@ public final class ApplicationContext {
                 repositoryFactory.assessmentRepository(),
                 repositoryFactory.gradeRepository(),
                 repositoryFactory.finalGradeRepository(),
-                repositoryFactory.studentRepository(),
                 accessControlService);
         this.instructorApi = new InstructorApi(
                 instructorService,
                 repositoryFactory.instructorRepository(),
-                repositoryFactory.sectionRepository(),
-                repositoryFactory.enrollmentRepository(),
-                repositoryFactory.assessmentRepository(),
                 repositoryFactory.gradeRepository(),
                 repositoryFactory.finalGradeRepository(),
                 repositoryFactory.studentRepository());
@@ -93,8 +89,7 @@ public final class ApplicationContext {
                 passwordHasher);
         this.adminApi = new AdminApi(
                 adminService,
-                maintenanceService,
-                repositoryFactory.authUserRepository());
+                maintenanceService);
     }
 
     public ApplicationConfiguration config() {

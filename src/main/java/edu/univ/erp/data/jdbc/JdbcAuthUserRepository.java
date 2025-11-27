@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -104,6 +106,23 @@ public final class JdbcAuthUserRepository implements AuthUserRepository {
     }
 
     @Override
+    public AuthUser updateRole(long userId, UserRole role) {
+        String sql = "UPDATE users_auth SET role = ? WHERE user_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, role.name());
+            stmt.setLong(2, userId);
+            int updated = stmt.executeUpdate();
+            if (updated == 0) {
+                throw new DataAccessException("User not found: " + userId);
+            }
+            return findById(userId).orElseThrow(() -> new DataAccessException("Failed to retrieve updated user"));
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to update user role: " + userId, ex);
+        }
+    }
+
+    @Override
     public void updatePassword(long userId, String newHash) {
         String sql = "UPDATE users_auth SET password_hash = ?, failed_attempts = 0 WHERE user_id = ?";
         try (Connection conn = dataSource.getConnection();
@@ -155,6 +174,35 @@ public final class JdbcAuthUserRepository implements AuthUserRepository {
         Timestamp lastLoginTs = rs.getTimestamp("last_login");
         Instant lastLogin = lastLoginTs != null ? lastLoginTs.toInstant() : null;
         return new AuthUser(id, username, role, status, passwordHash, failedAttempts, lastLogin);
+    }
+
+    @Override
+    public void delete(long userId) {
+        String sql = "DELETE FROM users_auth WHERE user_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to delete user: " + userId, ex);
+        }
+    }
+
+    @Override
+    public List<AuthUser> findAll() {
+        String sql = "SELECT user_id, username, role, password_hash, status, failed_attempts, last_login "
+                + "FROM users_auth ORDER BY username";
+        List<AuthUser> users = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                users.add(mapRow(rs));
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to load auth users", ex);
+        }
+        return users;
     }
 }
 

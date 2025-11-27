@@ -1,5 +1,6 @@
 package edu.univ.erp.data;
 
+import java.util.List;
 import java.util.Optional;
 
 import edu.univ.erp.auth.AuthUser;
@@ -18,10 +19,16 @@ public interface AuthUserRepository {
 
     AuthUser updateStatus(long userId, AccountStatus status);
 
+    AuthUser updateRole(long userId, edu.univ.erp.domain.UserRole role);
+
     void updatePassword(long userId, String newHash);
 
     void recordSuccessfulLogin(long userId);
 
     void recordFailedAttempt(long userId, int newCount);
+
+    void delete(long userId);
+
+    List<AuthUser> findAll();
 }
 

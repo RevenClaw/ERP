@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -18,6 +19,8 @@ import edu.univ.erp.data.CourseRepository;
 import edu.univ.erp.domain.Course;
 import edu.univ.erp.domain.Section;
 import edu.univ.erp.domain.Term;
+import edu.univ.erp.ui.common.ButtonStyler;
+import edu.univ.erp.ui.common.TableStyler;
 
 /**
  * Panel for viewing instructor's assigned sections.
@@ -50,6 +53,7 @@ public class MySectionsPanel extends JPanel {
             }
         };
         this.sectionsTable = new JTable(tableModel);
+        TableStyler.apply(sectionsTable);
         this.currentSections = List.of();
 
         initializeUI();
@@ -71,7 +75,8 @@ public class MySectionsPanel extends JPanel {
         yearCombo.setSelectedItem(2025);
         topPanel.add(yearCombo);
 
-        javax.swing.JButton loadButton = new javax.swing.JButton("Load My Sections");
+        JButton loadButton = new JButton("Load My Sections");
+        ButtonStyler.stylePrimary(loadButton);
         loadButton.addActionListener(e -> loadSections());
         topPanel.add(loadButton);
 
@@ -133,5 +138,5 @@ public class MySectionsPanel extends JPanel {
             return currentSections.get(selectedRow).id();
         }
         return null;
-    }
+    }
 }

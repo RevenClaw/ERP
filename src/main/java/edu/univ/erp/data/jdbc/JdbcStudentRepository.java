@@ -143,6 +143,18 @@ public final class JdbcStudentRepository implements StudentRepository {
         return students;
     }
 
+    @Override
+    public void deleteByUserId(long userId) {
+        String sql = "DELETE FROM students WHERE user_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to delete student for user: " + userId, ex);
+        }
+    }
+
     private Student mapRow(ResultSet rs) throws SQLException {
         long id = rs.getLong("student_id");
         long userId = rs.getLong("user_id");
